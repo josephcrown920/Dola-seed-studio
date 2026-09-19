@@ -1,0 +1,94 @@
+name: Full Repo Auto Update
+on:
+  workflow_dispatch:
+jobs:
+  update-all:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      # Add MIT License
+      - name: Add LICENSE file
+        run: |
+          cat > LICENSE << 'EOF'
+          MIT License
+          
+          Copyright (c) 2024 Joseph Crown
+          
+          Permission is hereby granted, free of charge, to any person obtaining a copy
+          of this software and associated documentation files (the "Software"), to deal
+          in the Software without restriction, including without limitation the rights
+          to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+          copies of the Software, and to permit persons to whom the Software is
+          furnished to do so, subject to the following conditions:
+          
+          The above copyright notice and this permission notice shall be included in all
+          copies or substantial portions of the Software.
+          
+          THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+          IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+          FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+          AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+          LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+          OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+          SOFTWARE.
+          EOF
+      
+      # Add Changelog
+      - name: Add CHANGELOG.md
+        run: |
+          cat > CHANGELOG.md << 'EOF'
+          # Changelog
+          
+          ## [1.0.0] - 2024-05-20
+          ### Initial Release
+          - Dola Seed 2.1 AI Assistant with multimodal support
+          - Seedream 5.0 Image Generation (text-to-image, image-to-image, inpainting)
+          - Professional motion control system with 8 camera presets
+          - Seedance 2.1 AI Video Editor with timeline
+          - Full end-to-end workflow integration
+          - Smooth GUI animations: sliding panel, E-key popup, page transitions
+          - Auto-save for chat history and generation prompts
+          EOF
+      
+      # Update README to full professional version
+      - name: Update README.md
+        run: |
+          cat > README.md << 'EOF'
+          # Dola Seed Studio 2.1 Pro
+          All-in-one cross-platform desktop AI creative workstation integrating Dola Seed 2.1 LLM, Seedream 5.0 image generation engine, and professional motion-controlled AI video editing.
+          
+          ---
+          
+          ## ✨ Core Features
+          
+          ### 🧠 Dola Seed 2.1 AI Assistant
+          - 4 model tiers: Pro / Lite / Mini / Code
+          - Full multimodal support: text, images, video input (drag-and-drop upload)
+          - Built-in capabilities: script writing, code generation, image/video analysis, multi-step agent workflows
+          - One-click send prompts/script directly to Seedream 5.0 or the video editor
+          
+          ### 🖼️ Seedream 5.0 Image Generation
+          - 3 official model tiers: Pro / Lite / Pro Max (4K resolution support)
+          - 3 working modes: Text-to-Image, Image-to-Image, semantic inpainting
+          - Exclusive Seedream 5.0 features: real-time web search, deep reasoning mode, enhanced text rendering, character consistency, multilingual support
+          - Built-in style presets, persistent generation history gallery, one-click export to video motion pipeline
+          
+          ### 🎮 Professional Motion Control System
+          - Visual keyframe editor: click directly on reference images to draw custom camera motion paths
+          - 8 pro camera presets (one-click apply): zoom in, zoom out, pan left/right, tilt up/down, orbit, dolly zoom
+          - Advanced controls: motion intensity slider, AI subject tracking, depth-of-field simulation
+          - Fully integrated with the image-to-video generation pipeline
+          
+          ### 🎬 AI Video Editor (Seedance 2.1 Engine)
+          - Two generation modes: Text-to-Video, Image-to-Video (paired with motion control)
+          - Professional 4-track timeline (video / audio / subtitle / effects)
+          - AI editing toolkit: beat-based auto-cut, automatic multilingual subtitles, 4K super resolution, smart frame interpolation, style transfer, character consistency preservation
+          - Multiple export options: MP4, MOV, WEBM, GIF, PNG sequences
+          
+          ---
+          
+          ## 🚀 Quick Start
+          ### 1. Install dependencies
+          ```bash
+          pip install -r requirements.txt
