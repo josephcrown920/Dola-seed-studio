@@ -1,6 +1,8 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import CodeEditor from './components/CodeEditor'
+import ModelSelector from './components/ModelSelector'
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState('chat')
@@ -10,12 +12,13 @@ export default function Home() {
   const [input, setInput] = useState('')
   const [prompt, setPrompt] = useState('')
   const [gallery, setGallery] = useState([])
-  const [apiKey, setApiKey] = useState('')
   const [apiEndpoint, setApiEndpoint] = useState('')
   const [isHydrated, setIsHydrated] = useState(false)
+  const [selectedChatModel, setSelectedChatModel] = useState('dola-seed-2.1-pro')
+  const [selectedImageModel, setSelectedImageModel] = useState('seedream-5.0-pro')
+  const [isChatLoading, setIsChatLoading] = useState(false)
 
   useEffect(() => {
-    setApiKey(localStorage.getItem('dola_api_key') || '')
     setApiEndpoint(localStorage.getItem('dola_api_endpoint') || '')
     setIsHydrated(true)
   }, [])
@@ -24,22 +27,38 @@ export default function Home() {
     { id: 'chat', name: '🧠 Dola Seed Chat' },
     { id: 'image', name: '🖼️ Seedream 5.0' },
     { id: 'motion', name: '🎮 Motion Video' },
+    { id: 'code', name: '💻 AI Code Editor' },
     { id: 'settings', name: '⚙️ Settings' }
   ]
 
-  const sendMessage = () => {
-    if (!input.trim()) return
-    const newHistory = [...chatHistory, { role: 'user', content: input }]
+  const sendMessage = async () => {
+    const message = input.trim()
+    if (!message || isChatLoading) return
+
+    const newHistory = [...chatHistory, { role: 'user', content: message }]
     setChatHistory(newHistory)
     setInput('')
-    setTimeout(() => {
-      setChatHistory([...newHistory, {
+    setIsChatLoading(true)
+
+    try {
+      const response = await fetch('/api/modelark/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ model: selectedChatModel, prompt: message })
+      })
+      const data = await response.json()
+      const content = data?.choices?.[0]?.message?.content ||
+        data?.error?.message ||
+        'ModelArk returned no message.'
+      setChatHistory(history => [...history, { role: 'ai', content }])
+    } catch (error) {
+      setChatHistory(history => [...history, {
         role: 'ai',
-        content: `🤖 Dola Seed 2.1 response:
-I understand your request: "${input.slice(0, 50)}..."
-✅ You can send this prompt to Seedream or the video editor directly.`
+        content: `ModelArk request failed: ${error.message}`
       }])
-    }, 1000)
+    } finally {
+      setIsChatLoading(false)
+    }
   }
 
   const generateImage = () => {
@@ -50,7 +69,6 @@ I understand your request: "${input.slice(0, 50)}..."
   }
 
   const saveSettings = () => {
-    localStorage.setItem('dola_api_key', apiKey)
     localStorage.setItem('dola_api_endpoint', apiEndpoint)
     alert('Settings saved!')
   }
@@ -90,6 +108,12 @@ I understand your request: "${input.slice(0, 50)}..."
         {activeTab === 'chat' && (
           <div>
             <h1 style={{ marginBottom: 20 }}>🧠 Dola Seed 2.1 Assistant</h1>
+            <label htmlFor="chat-model">ModelArk chat model:</label>
+            <ModelSelector
+              type="chat"
+              selected={selectedChatModel}
+              onSelect={setSelectedChatModel}
+            />
             <div className="card" style={{ height: '50vh', overflowY: 'auto' }}>
               {chatHistory.map((msg, i) => (
                 <div key={i} style={{ margin: '12px 0' }}>
@@ -107,7 +131,9 @@ I understand your request: "${input.slice(0, 50)}..."
               rows={3}
             />
             <div style={{ display: 'flex', gap: 10, marginTop: 8, flexWrap: 'wrap' }}>
-              <button onClick={sendMessage}>Send</button>
+              <button onClick={sendMessage} disabled={isChatLoading}>
+                {isChatLoading ? 'Thinking…' : 'Send'}
+              </button>
               <button className="secondary" onClick={() => setPrompt(input)}>Send to Seedream</button>
             </div>
           </div>
@@ -127,11 +153,11 @@ I understand your request: "${input.slice(0, 50)}..."
                     placeholder="Describe the image you want to generate..."
                   />
                   <label>Model:</label>
-                  <select>
-                    <option>Pro</option>
-                    <option>Lite</option>
-                    <option>Pro Max (4K)</option>
-                  </select>
+                  <ModelSelector
+                    type="image"
+                    selected={selectedImageModel}
+                    onSelect={setSelectedImageModel}
+                  />
                   <label>Style:</label>
                   <select>
                     <option>Realistic</option>
@@ -188,6 +214,8 @@ I understand your request: "${input.slice(0, 50)}..."
           </div>
         )}
 
+        {activeTab === 'code' && <CodeEditor />}
+
         {activeTab === 'settings' && (
           <div>
             <h1 style={{ marginBottom: 20 }}>⚙️ Settings</h1>
@@ -198,16 +226,16 @@ I understand your request: "${input.slice(0, 50)}..."
                 onChange={e => setApiEndpoint(e.target.value)}
                 placeholder="https://api.seed.bytedance.com/v1"
               />
-              <label>API Key:</label>
-              <input
-                type="password"
-                value={apiKey}
-                onChange={e => setApiKey(e.target.value)}
-                placeholder="Enter your API key (saved locally in your browser)"
-              />
               <button onClick={saveSettings} style={{ marginTop: 12 }}>Save Settings</button>
               <p style={{ marginTop: 12, fontSize: 12, color: '#6c7086' }}>
-                🔒 Your API key is stored only in your browser, never sent to any server except for official API calls.
+                The endpoint preference is stored locally in your browser.
+              </p>
+            </div>
+            <div className="card" style={{ maxWidth: 500 }}>
+              <h3>BytePlus ModelArk</h3>
+              <p style={{ marginTop: 8, color: '#bac2de' }}>
+                ModelArk credentials are kept server-side and are never stored in this browser.
+                Configure <code>BYTEPLUS_ACCESS_KEY</code> and <code>BYTEPLUS_SECRET_KEY</code> as Replit secrets to enable live models.
               </p>
             </div>
           </div>
