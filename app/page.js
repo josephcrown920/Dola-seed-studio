@@ -12,10 +12,12 @@ export default function Home() {
   const [gallery, setGallery] = useState([])
   const [apiKey, setApiKey] = useState('')
   const [apiEndpoint, setApiEndpoint] = useState('')
+  const [isHydrated, setIsHydrated] = useState(false)
 
   useEffect(() => {
     setApiKey(localStorage.getItem('dola_api_key') || '')
     setApiEndpoint(localStorage.getItem('dola_api_endpoint') || '')
+    setIsHydrated(true)
   }, [])
 
   const tabs = [
@@ -53,6 +55,23 @@ I understand your request: "${input.slice(0, 50)}..."
     alert('Settings saved!')
   }
 
+  if (!isHydrated) {
+    return (
+      <div
+        style={{
+          minHeight: '100vh',
+          background: '#11111b',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          color: '#89b4fa'
+        }}
+      >
+        Loading Dola Seed Studio...
+      </div>
+    )
+  }
+
   return (
     <div>
       <div className="nav">
@@ -87,7 +106,7 @@ I understand your request: "${input.slice(0, 50)}..."
               placeholder="Type your message..."
               rows={3}
             />
-            <div style={{ display: 'flex', gap: 10, marginTop: 8 }}>
+            <div style={{ display: 'flex', gap: 10, marginTop: 8, flexWrap: 'wrap' }}>
               <button onClick={sendMessage}>Send</button>
               <button className="secondary" onClick={() => setPrompt(input)}>Send to Seedream</button>
             </div>
@@ -97,7 +116,7 @@ I understand your request: "${input.slice(0, 50)}..."
         {activeTab === 'image' && (
           <div>
             <h1 style={{ marginBottom: 20 }}>🖼️ Seedream 5.0 Image Generator</h1>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: 20 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'minmax(280px, 1fr) 2fr', gap: 20 }}>
               <div>
                 <div className="card">
                   <label>Prompt:</label>
@@ -155,7 +174,7 @@ I understand your request: "${input.slice(0, 50)}..."
             <h1 style={{ marginBottom: 20 }}>🎮 Motion Control + Video Generation</h1>
             <div className="card">
               <h3>Camera Motion Presets:</h3>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, margin: '12px 0' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 8, margin: '12px 0' }}>
                 {['Zoom In', 'Zoom Out', 'Pan Left', 'Pan Right', 'Tilt Up', 'Tilt Down', 'Orbit', 'Dolly Zoom'].map(preset => (
                   <button key={preset} className="secondary" onClick={() => alert(`${preset} preset applied!`)}>
                     {preset}
