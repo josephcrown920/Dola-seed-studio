@@ -587,7 +587,7 @@ class VideoEditorPage(QWidget):
 
         self.tabs = QTabWidget()
         self.tabs.addTab(self.create_generate_tab(), "✨ AI Generate")
-        self.tabs.addTab(self.create_editing_tab(), "✂️ Full Timeline Editor")
+        self.tabs.addTab(self.create_editing_tab(), "✂️ Full Timeline + Layers Editor")
         self.tabs.addTab(self.create_export_tab(), "💾 Export")
         layout.addWidget(self.tabs)
 
@@ -841,7 +841,7 @@ class VideoEditorPage(QWidget):
         top_splitter.setSizes([200, 600, 200])
         main_layout.addWidget(top_splitter, stretch=5)
 
-        # Bottom: Full Timeline
+        # Layer stack / compositor controls\n        self.layers = []\n        main_layout.addWidget(self.create_layers_panel(), stretch=2)\n\n        # Bottom: Full Timeline
         timeline_group = QGroupBox("⏱️ Timeline Editor (drag clips from media library)")
         timeline_layout = QVBoxLayout(timeline_group)
 
@@ -881,6 +881,212 @@ class VideoEditorPage(QWidget):
         self.edit_player.setVideoOutput(self.edit_preview)
 
         return page
+
+
+    def create_layers_panel(self) -> QWidget:
+        group = QGroupBox("🧩 Layers / Compositor")
+        layout = QVBoxLayout(group)
+        toolbar = QHBoxLayout()
+
+        for label, layer_type in [
+            ("🎬 Video", "video"),
+            ("🖼️ Image", "image"),
+            ("T Text", "text"),
+            ("🎵 Audio", "audio"),
+            ("✨ Overlay", "overlay"),
+        ]:
+            btn = QPushButton(label)
+            btn.setProperty("secondary", "true")
+            btn.clicked.connect(lambda checked=False, t=layer_type: self.add_editor_layer(t))
+            toolbar.addWidget(btn)
+
+        remove_btn = QPushButton("🗑️")
+        remove_btn.setProperty("secondary", "true")
+        remove_btn.clicked.connect(self.remove_editor_layer)
+        toolbar.addWidget(remove_btn)
+        layout.addLayout(toolbar)
+
+        body = QHBoxLayout()
+        self.layer_list = QListWidget()
+        self.layer_list.setMaximumHeight(150)
+        self.layer_list.currentRowChanged.connect(self.on_layer_selected)
+        body.addWidget(self.layer_list, stretch=2)
+
+        inspector = QFormLayout()
+        self.layer_name = QLineEdit()
+        self.layer_name.editingFinished.connect(self.apply_layer_properties)
+        inspector.addRow("Name", self.layer_name)
+
+        self.layer_visible = QCheckBox("Visible")
+        self.layer_visible.setChecked(True)
+        self.layer_visible.stateChanged.connect(self.apply_layer_properties)
+        inspector.addRow("", self.layer_visible)
+
+        self.layer_locked = QCheckBox("Locked")
+        self.layer_locked.stateChanged.connect(self.apply_layer_properties)
+        inspector.addRow("", self.layer_locked)
+
+        self.layer_opacity = QDoubleSpinBox()
+        self.layer_opacity.setRange(0.0, 1.0)
+        self.layer_opacity.setSingleStep(0.05)
+        self.layer_opacity.setValue(1.0)
+        self.layer_opacity.valueChanged.connect(self.apply_layer_properties)
+        inspector.addRow("Opacity", self.layer_opacity)
+
+        self.layer_x = QDoubleSpinBox()
+        self.layer_x.setRange(-100.0, 100.0)
+        self.layer_x.setSingleStep(1.0)
+        self.layer_x.valueChanged.connect(self.apply_layer_properties)
+        inspector.addRow("X", self.layer_x)
+
+        self.layer_y = QDoubleSpinBox()
+        self.layer_y.setRange(-100.0, 100.0)
+        self.layer_y.setSingleStep(1.0)
+        self.layer_y.valueChanged.connect(self.apply_layer_properties)
+        inspector.addRow("Y", self.layer_y)
+
+        self.layer_scale = QDoubleSpinBox()
+        self.layer_scale.setRange(0.1, 4.0)
+        self.layer_scale.setSingleStep(0.05)
+        self.layer_scale.setValue(1.0)
+        self.layer_scale.valueChanged.connect(self.apply_layer_properties)
+        inspector.addRow("Scale", self.layer_scale)
+
+        body.addLayout(inspector, stretch=3)
+        layout.addLayout(body)
+
+        order = QHBoxLayout()
+        for label, direction in [("↑ Move Up", -1), ("↓ Move Down", 1)]:
+            btn = QPushButton(label)
+            btn.setProperty("secondary", "true")
+            btn.clicked.connect(lambda checked=False, d=direction: self.move_editor_layer(d))
+            order.addWidget(btn)
+        add_timeline = QPushButton("➕ Insert into Timeline")
+        add_timeline.clicked.connect(self.insert_selected_layer_to_timeline)
+        order.addWidget(add_timeline)
+        layout.addLayout(order)
+
+        return group
+
+    def add_editor_layer(self, layer_type):
+        index = len(self.layers) + 1
+        names = {
+            "video": f"Video Layer {index}",
+            "image": f"Image Layer {index}",
+            "text": f"Text Layer {index}",
+            "audio": f"Audio Layer {index}",
+            "overlay": f"Overlay Layer {index}",
+        }
+        layer = {
+            "id": f"layer-{index}-{layer_type}",
+            "type": layer_type,
+            "name": names[layer_type],
+            "visible": True,
+            "locked": False,
+            "opacity": 1.0,
+            "x": 0.0,
+            "y": 0.0,
+            "scale": 1.0,
+            "content": "",
+        }
+        if layer_type in ("video", "image", "audio"):
+            files, _ = QFileDialog.getOpenFileNames(self, f"Select {layer_type} media", "", "Media files (*.mp4 *.mov *.avi *.mp3 *.wav *.png *.jpg *.jpeg *.gif)")
+            if files:
+                layer["content"] = files[0]
+                layer["name"] = os.path.basename(files[0])
+        elif layer_type == "text":
+            layer["content"] = "Your text"
+        self.layers.append(layer)
+        self.refresh_layer_list()
+        self.layer_list.setCurrentRow(len(self.layers) - 1)
+
+    def refresh_layer_list(self):
+        self.layer_list.blockSignals(True)
+        self.layer_list.clear()
+        for layer in self.layers:
+            state = "" if layer["visible"] else " (hidden)"
+            lock = " 🔒" if layer["locked"] else ""
+            self.layer_list.addItem(f'{layer["name"]} · {layer["type"]}{state}{lock}')
+        self.layer_list.blockSignals(False)
+
+    def on_layer_selected(self, row):
+        if row < 0 or row >= len(self.layers):
+            return
+        layer = self.layers[row]
+        self.layer_name.blockSignals(True)
+        self.layer_name.setText(layer["name"])
+        self.layer_name.blockSignals(False)
+        for widget, value in [
+            (self.layer_visible, layer["visible"]),
+            (self.layer_locked, layer["locked"]),
+        ]:
+            widget.blockSignals(True)
+            widget.setChecked(value)
+            widget.blockSignals(False)
+        for widget, value in [
+            (self.layer_opacity, layer["opacity"]),
+            (self.layer_x, layer["x"]),
+            (self.layer_y, layer["y"]),
+            (self.layer_scale, layer["scale"]),
+        ]:
+            widget.blockSignals(True)
+            widget.setValue(value)
+            widget.blockSignals(False)
+
+    def apply_layer_properties(self, *args):
+        row = self.layer_list.currentRow()
+        if row < 0 or row >= len(self.layers):
+            return
+        layer = self.layers[row]
+        layer.update({
+            "name": self.layer_name.text(),
+            "visible": self.layer_visible.isChecked(),
+            "locked": self.layer_locked.isChecked(),
+            "opacity": self.layer_opacity.value(),
+            "x": self.layer_x.value(),
+            "y": self.layer_y.value(),
+            "scale": self.layer_scale.value(),
+        })
+        self.refresh_layer_list()
+        self.layer_list.setCurrentRow(row)
+
+    def remove_editor_layer(self):
+        row = self.layer_list.currentRow()
+        if row < 0:
+            return
+        self.layers.pop(row)
+        self.refresh_layer_list()
+        if self.layers:
+            self.layer_list.setCurrentRow(min(row, len(self.layers) - 1))
+
+    def move_editor_layer(self, direction):
+        row = self.layer_list.currentRow()
+        target = row + direction
+        if row < 0 or target < 0 or target >= len(self.layers):
+            return
+        self.layers[row], self.layers[target] = self.layers[target], self.layers[row]
+        self.refresh_layer_list()
+        self.layer_list.setCurrentRow(target)
+
+    def insert_selected_layer_to_timeline(self):
+        row = self.layer_list.currentRow()
+        if row < 0 or row >= len(self.layers):
+            QMessageBox.information(self, "Layers", "Select a layer first.")
+            return
+        layer = self.layers[row]
+        track_type = "video" if layer["type"] == "video" else "audio" if layer["type"] == "audio" else "effect"
+        track = next((t for t in self.tracks if getattr(t, "track_type", None) == track_type), None)
+        if track is None:
+            QMessageBox.information(self, "Layers", "No compatible timeline track is available.")
+            return
+        clip = QFrame(track)
+        clip.setProperty("timelineClip", "true")
+        clip.setFixedSize(120, 25)
+        clip.move(20 + len(track.findChildren(QFrame)) * 8, 5)
+        clip_label = QLabel(layer["name"], clip)
+        clip_label.setStyleSheet("font-size: 10px; color: white; padding: 2px;")
+        clip.show()
+        QMessageBox.information(self, "Layers", f'{layer["name"]} inserted into the {track_type} timeline track.')
 
     def import_media(self):
         files, _ = QFileDialog.getOpenFileNames(self, "Import Media", "", 
