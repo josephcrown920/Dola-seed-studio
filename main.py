@@ -1013,17 +1013,24 @@ class VideoEditorPage(QWidget):
         if row < 0 or row >= len(self.layers):
             return
         layer = self.layers[row]
+        self.layer_name.blockSignals(True)
+        self.layer_name.setText(layer["name"])
+        self.layer_name.blockSignals(False)
         for widget, value in [
-            (self.layer_name, layer["name"]),
             (self.layer_visible, layer["visible"]),
             (self.layer_locked, layer["locked"]),
+        ]:
+            widget.blockSignals(True)
+            widget.setChecked(value)
+            widget.blockSignals(False)
+        for widget, value in [
             (self.layer_opacity, layer["opacity"]),
             (self.layer_x, layer["x"]),
             (self.layer_y, layer["y"]),
             (self.layer_scale, layer["scale"]),
         ]:
             widget.blockSignals(True)
-            widget.setValue(value) if hasattr(widget, "setValue") else widget.setText(value) if hasattr(widget, "setText") else widget.setChecked(value)
+            widget.setValue(value)
             widget.blockSignals(False)
 
     def apply_layer_properties(self, *args):
