@@ -151,3 +151,16 @@ Before declaring a recreation complete, compare:
 - output aspect ratio
 
 Return a list of mismatches and provide a targeted correction rather than regenerating the entire project unnecessarily.
+
+
+## Seedance 2.x real-person reference routing (permanent rule)
+
+- Seedance 2.x supports multimodal image/video/audio references, but raw real-person reference images/videos can be blocked by BytePlus review.
+- Never retry the same raw real-person reference after a provider block.
+- For authorized real-person identity, route through the LAS material/virtual portrait library and use the resulting `asset://<ASSET_ID>`.
+- Treat reference video as a source of motion, camera language, pacing, composition, shot structure, and edit rhythm unless the user explicitly asks for identity transfer.
+- Preserve non-person references for style, environment, props, wardrobe, and composition when appropriate.
+- Surface a structured `REAL_PERSON_REFERENCE_REQUIRES_ASSET` error with the next action instead of a generic generation failure.
+- Seedance 2.5 currently supports up to 30 multimodal reference images and 4–30 second output duration in the documented enhanced generation path.
+- Reference inputs must be routed by modality: image_url/reference_image, video_url/reference_video, and audio_url/reference_audio.
+- For person replacement/editing through LAS Video Edit Enhanced, use the documented person-replacement template and asset API/allowlist; do not invent undocumented provider parameters.
