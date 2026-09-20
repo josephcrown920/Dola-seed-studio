@@ -19,17 +19,26 @@ export default function CodeEditor() {
   const [selectedModel, setSelectedModel] = useState('deepseek-coder-v2')
   const [mode, setMode] = useState('review')
   const [filePath, setFilePath] = useState('')
+  const [accessToken, setAccessToken] = useState('')
   const [output, setOutput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
 
   const runCodingAgent = async action => {
+    if (!accessToken.trim()) {
+      setOutput('Enter the Codex Aurora access token configured for this deployment.')
+      return
+    }
+
     setIsLoading(true)
     setOutput('')
 
     try {
       const response = await fetch('/api/aurora/coding', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${accessToken.trim()}`
+        },
         body: JSON.stringify({
           mode,
           filePath,
@@ -56,6 +65,21 @@ export default function CodeEditor() {
         <span style={{ padding: '6px 10px', borderRadius: 999, background: 'rgba(0,245,212,.12)', color: '#00f5d4', fontSize: 12 }}>
           Aurora Director
         </span>
+      </div>
+
+      <div className="card" style={{ marginBottom: 20 }}>
+        <label htmlFor="aurora-access-token">Codex Aurora access token:</label>
+        <input
+          id="aurora-access-token"
+          type="password"
+          value={accessToken}
+          onChange={event => setAccessToken(event.target.value)}
+          placeholder="Deployment access token"
+          autoComplete="off"
+        />
+        <small style={{ display: 'block', marginTop: 6, opacity: 0.65 }}>
+          Kept only in this page session; it is not stored in localStorage.
+        </small>
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 2fr) minmax(320px, 1fr)', gap: 20 }}>
