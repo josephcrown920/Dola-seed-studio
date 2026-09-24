@@ -9,6 +9,7 @@
     "build:low-memory": "NODE_OPTIONS=--max-old-space-size=512 next build --webpack"
   },
   "dependencies": {
+    "@vercel/analytics": "^2.0.1",
     "next": "14.2.3",
     "react": "18.3.1",
     "react-dom": "18.3.1"
