@@ -2,7 +2,7 @@ export const MODELARK_VISION_MODELS={
   deepseek:"deepseek-v4-1-flash-260910",
   glm:"glm-5-3-flash-260828",
   director:"dola-seed-2-1-turbo-260628",
-} as const;
+};
 
 export const MULTIMODAL_SKILLS=[
   {id:"vision-review",label:"Vision review",prompt:"Inspect supplied image/video evidence. Separate observations from inference. Identify subjects, actions, composition, camera, lighting, wardrobe, props, text, continuity and edit opportunities."},
