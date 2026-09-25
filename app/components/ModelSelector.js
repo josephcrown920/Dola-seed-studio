@@ -5,9 +5,11 @@ const MODELARK_MODELS = {
     { id: 'dola-seed-2.1-pro', name: 'Dola Seed 2.1 Pro', desc: 'All-purpose flagship' },
     { id: 'dola-seed-2.1-lite', name: 'Dola Seed 2.1 Lite', desc: 'Fast lightweight' },
     { id: 'dola-seed-2.1-mini', name: 'Dola Seed 2.1 Mini', desc: 'Ultra low power' },
-    { id: 'glm-5.1', name: 'GLM-5.1', desc: 'High-end reasoning' },
+    { id: 'glm-5-3-flash-260828', name: 'GLM 5.3 Flash', desc: 'Multimodal reasoning + tool use' },
+    { id: 'glm-5-2-260617', name: 'GLM 5.2', desc: 'Long-context reasoning' },
     { id: 'doubao-pro-32k', name: 'Doubao Pro 32k', desc: 'Long context' },
-    { id: 'deepseek-coder-v2', name: 'DeepSeek Coder V2', desc: 'Code specialized' }
+    { id: 'deepseek-v4-1-flash-260910', name: 'DeepSeek V4.1 Flash', desc: 'Visual understanding + reasoning' },
+    { id: 'deepseek-v4-pro-ga-260813', name: 'DeepSeek V4 Pro', desc: 'Deep reasoning + structured output' }
   ],
   image: [
     { id: 'seedream-5.0-pro', name: 'Seedream 5.0 Pro', desc: 'Professional quality' },
@@ -20,9 +22,11 @@ const MODELARK_MODELS = {
     { id: 'seedance-2.0', name: 'Seedance 2.0', desc: 'Stable standard' }
   ],
   code: [
-    { id: 'glm-5.1', name: 'GLM-5.1', desc: 'Best for code' },
+    { id: 'glm-5-2-260617', name: 'GLM 5.2', desc: 'Agentic coding' },
+    { id: 'glm-5-3-flash-260828', name: 'GLM 5.3 Flash', desc: 'Multimodal tool use' },
     { id: 'code-lama-70b', name: 'Code Llama 70B', desc: 'Open code model' },
-    { id: 'deepseek-coder-v2', name: 'DeepSeek Coder V2', desc: 'Code specialized' }
+    { id: 'deepseek-v4-pro-ga-260813', name: 'DeepSeek V4 Pro', desc: 'Deep reasoning' },
+    { id: 'deepseek-v4-1-flash-260910', name: 'DeepSeek V4.1 Flash', desc: 'Visual reasoning' }
   ]
 }
 
