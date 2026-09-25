@@ -39,6 +39,7 @@ export default function Home() {
     { id: 'orchestrator', name: '🔮 Agent Orchestrator' },
     { id: 'memory', name: '🧠 Long Memory' },
     { id: 'code', name: '💻 Code Editor' },
+    { id: 'vision', name: '👁️ Vision + Agents' },
     { id: 'settings', name: '⚙️ Settings' }
   ]
 
@@ -138,6 +139,57 @@ export default function Home() {
   const [codeModel, setCodeModel] = useState('deepseek-coder-v2')
   const [codePrompt, setCodePrompt] = useState('')
   const [codeOutput, setCodeOutput] = useState('AI output will appear here')
+
+  // Multimodal production analysis
+  const [visionUrl, setVisionUrl] = useState('')
+  const [visionType, setVisionType] = useState('image')
+  const [visionInstruction, setVisionInstruction] = useState('Analyze this media for subjects, actions, camera, lighting, character continuity, blocking, props, edit points and timeline opportunities.')
+  const [visionModel, setVisionModel] = useState('deepseek-v4-1-flash-260910')
+  const [visionOutput, setVisionOutput] = useState('Vision analysis will appear here.')
+  const [visionBusy, setVisionBusy] = useState(false)
+
+  const runVisionAnalysis = async () => {
+    if (!visionUrl.trim()) return
+    setVisionBusy(true)
+    try {
+      const content = [
+        { type: 'text', text: visionInstruction },
+        visionType === 'image'
+          ? { type: 'image_url', image_url: { url: visionUrl.trim(), detail: 'high' } }
+          : { type: 'video_url', video_url: { url: visionUrl.trim(), fps: 1 } }
+      ]
+      const response = await fetch('/api/modelark/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ model: visionModel, content })
+      })
+      const data = await response.json()
+      const text = data?.choices?.[0]?.message?.content || data?.output_text || JSON.stringify(data, null, 2)
+      setVisionOutput(text)
+      setLongTermMemory(prev => ({
+        ...prev,
+        knowledgeBase: [
+          ...prev.knowledgeBase,
+          { type: 'multimodal-analysis', mediaType: visionType, url: visionUrl.trim(), model: visionModel, instruction: visionInstruction, output: text, timestamp: new Date().toISOString() }
+        ]
+      }))
+    } catch (error) {
+      setVisionOutput('Vision analysis failed: ' + (error?.message || 'Unknown error'))
+    } finally {
+      setVisionBusy(false)
+    }
+  }
+
+  const buildMultiAgentPlan = (brief) => [
+    { role: 'director', model: 'dola-seed-2-1-turbo-260628', task: 'Define intent and acceptance criteria.' },
+    { role: 'vision', model: 'deepseek-v4-1-flash-260910', task: 'Analyze visual evidence and shot structure.' },
+    { role: 'character continuity', model: 'glm-5-3-flash-260828', task: 'Lock identity, wardrobe, blocking and interaction.' },
+    { role: 'world continuity', model: 'glm-5-3-flash-260828', task: 'Lock environment, props, lighting and camera language.' },
+    { role: 'storyboard', model: 'dola-seed-2-1-turbo-260628', task: 'Create image/video shot prompts and coverage.' },
+    { role: 'editor', model: 'dola-seed-2-1-turbo-260628', task: 'Map the plan to reversible layered timeline edits.' },
+    { role: 'audio', model: 'glm-5-3-flash-260828', task: 'Plan dialogue, music and SFX layers.' },
+    { role: 'qa', model: 'deepseek-v4-1-flash-260910', task: 'Inspect results and request targeted repairs.' }
+  ].map(agent => ({ ...agent, brief }))
 
   const runCodeAction = (action) => {
     const output = `🤖 AI (${codeModel}) ${action} result:\n\nUsing long-context memory to reference your previous code projects...\n\nFull analysis will appear here when connected to ModelArk.`
@@ -606,6 +658,69 @@ export default function Home() {
                 <div className="glass-panel">
                   <h3>AI Output</h3>
                   <pre style={{ whiteSpace: 'pre-wrap', fontSize: 13 }}>{codeOutput}</pre>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Vision + Multi-Agent Tab */}
+        {activeTab === 'vision' && (
+          <div className="page">
+            <div className="top-bar glass-panel">
+              <div>
+                <h1>👁️ Vision + Multi-Agent Director</h1>
+                <p className="subtitle">DeepSeek + GLM visual analysis • multi-character continuity • layered edit planning</p>
+              </div>
+              <button onClick={() => setVisionOutput(JSON.stringify(buildMultiAgentPlan(visionInstruction), null, 2))}>
+                🧠 Build Agent Plan
+              </button>
+            </div>
+
+            <div className="editor-layout">
+              <div className="left-panel">
+                <div className="glass-panel">
+                  <h3>🎯 Visual Evidence</h3>
+                  <select value={visionType} onChange={e => setVisionType(e.target.value)}>
+                    <option value="image">Image</option>
+                    <option value="video">Video</option>
+                  </select>
+                  <input value={visionUrl} onChange={e => setVisionUrl(e.target.value)} placeholder="Paste an image/video URL or ModelArk file URL..." />
+                  <select value={visionModel} onChange={e => setVisionModel(e.target.value)}>
+                    <option value="deepseek-v4-1-flash-260910">DeepSeek V4.1 Flash — Vision</option>
+                    <option value="glm-5-3-flash-260828">GLM 5.3 Flash — Multimodal</option>
+                    <option value="dola-seed-2-1-turbo-260628">Dola Seed 2.1 Turbo — Director</option>
+                  </select>
+                  <textarea value={visionInstruction} onChange={e => setVisionInstruction(e.target.value)} rows={5} />
+                  <button onClick={runVisionAnalysis} disabled={visionBusy || !visionUrl.trim()} style={{ width: '100%', marginTop: 10 }}>
+                    {visionBusy ? '⏳ Analyzing…' : '👁️ Analyze Media'}
+                  </button>
+                </div>
+              </div>
+
+              <div className="center-panel">
+                <div className="glass-panel">
+                  <h3>🔎 Analysis / Agent Graph</h3>
+                  <pre style={{ whiteSpace: 'pre-wrap', fontSize: 12, lineHeight: 1.55 }}>{visionOutput}</pre>
+                </div>
+              </div>
+
+              <div className="right-panel">
+                <div className="glass-panel inspector">
+                  <h3>🧩 Production Skills</h3>
+                  {[
+                    'Multimodal vision',
+                    'Image creation',
+                    'Video creation',
+                    'Multi-character scenes',
+                    'Character continuity',
+                    'World continuity',
+                    'Layered timeline editing',
+                    'Targeted regeneration',
+                    'QA + repair'
+                  ].map(skill => (
+                    <div key={skill} className="ai-assist-item"><span>{skill}</span><span className="check">✓</span></div>
+                  ))}
                 </div>
               </div>
             </div>
