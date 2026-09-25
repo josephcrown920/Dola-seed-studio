@@ -1248,10 +1248,10 @@ class DolaChatPage(QWidget):
         top_bar.addWidget(QLabel("🧠 Dola Seed 2.1 Model:"))
         self.model_selector = QComboBox()
         self.model_selector.addItems([
-            "Dola Seed 2.1 Pro (Full Feature)",
-            "Dola Seed 2.1 Lite (Fast)",
-            "Dola Seed 2.1 Mini (Low Power)",
-            "Dola Seed 2.1 Code (Programming)"
+            "Dola Seed 2.1 Turbo (ModelArk)",
+            "DeepSeek V4.1 Flash (Vision + Reasoning)",
+            "GLM 5.3 Flash (Multimodal)",
+            "DeepSeek V4 Pro (Deep Reasoning)"
         ])
         top_bar.addWidget(self.model_selector)
         top_bar.addStretch()
@@ -1430,7 +1430,7 @@ class CodeEditorPage(QWidget):
         ai_layout = QVBoxLayout(ai_group)
         ai_layout.addWidget(QLabel("Model:"))
         self.code_model = QComboBox()
-        self.code_model.addItems(["DeepSeek Coder V2", "GLM-5.1", "Code Llama 70B", "Dola Seed 2.1 Code"])
+        self.code_model.addItems(["DeepSeek V4 Pro", "GLM 5.2", "GLM 5.3 Flash", "DeepSeek V4.1 Flash"])
         ai_layout.addWidget(self.code_model)
         ai_layout.addWidget(QLabel("Prompt:"))
         self.code_prompt = QTextEdit()
