@@ -11,7 +11,8 @@ export const MULTIMODAL_SKILLS=[
   {id:"image-creation",label:"Image creation",prompt:"Create production-ready prompts for character sheets, locations, keyframes, style frames, props and reference-conditioned images."},
   {id:"video-creation",label:"Video creation",prompt:"Create shot-level prompts for text-to-video, image-to-video, reference-to-video, extension and targeted video editing."},
   {id:"layered-edit",label:"Layered editor",prompt:"Translate natural-language changes into reversible edits over video, dialogue, music, SFX, captions, overlays, masks and transforms."},
-  {id:"multi-agent",label:"Multi-agent production",prompt:"Delegate to director, vision, character continuity, world continuity, storyboard, editor, audio and QA roles, then reconcile their outputs before editing."},
+  {id:"multi-agent",label:"Multi-agent production",prompt:"Delegate to director, vision, character continuity, world continuity, storyboard, workflow, editor, audio and QA roles, then reconcile their outputs before editing."},
+  {id:"comfyui-workflow",label:"ComfyUI workflow agent",prompt:"Select a saved ComfyUI workflow, map project inputs to its parameters, execute it, inspect outputs, and feed the result back into the project without flattening the timeline."},
 ];
 
 export async function analyzeMultimodal({model=MODELARK_VISION_MODELS.deepseek,instruction,inputs=[]}){
@@ -32,6 +33,7 @@ export function createMultiAgentPlan(brief){
     {role:"character-continuity",model:MODELARK_VISION_MODELS.glm,task:"Lock character identity and blocking."},
     {role:"world-continuity",model:MODELARK_VISION_MODELS.glm,task:"Lock location, props, lighting and camera language."},
     {role:"storyboard",model:MODELARK_VISION_MODELS.director,task:"Produce shot list and image/video generation prompts."},
+    {role:"comfyui-workflow",model:MODELARK_VISION_MODELS.director,task:"Select and execute the best saved ComfyUI workflow for the shot."},
     {role:"editor",model:MODELARK_VISION_MODELS.director,task:"Map edits to layered timeline ranges."},
     {role:"audio",model:MODELARK_VISION_MODELS.glm,task:"Plan dialogue, music and SFX tracks."},
     {role:"qa",model:MODELARK_VISION_MODELS.deepseek,task:"Inspect the result and request targeted repairs only."},
