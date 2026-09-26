@@ -1,5 +1,7 @@
 'use client'
 import { useState, useRef, useEffect } from 'react'
+import WorkflowLibrary from './components/WorkflowLibrary'
+import { speakAgentReply, stopAgentVoice } from './lib/agent-voice'
 
 export default function Home() {
   // Persistent long-context memory (survives refreshes)
@@ -29,6 +31,7 @@ export default function Home() {
   const [generatedImages, setGeneratedImages] = useState([])
   const [selectedImage, setSelectedImage] = useState(null)
   const [isWorkflowRunning, setIsWorkflowRunning] = useState(false)
+  const [voiceEnabled, setVoiceEnabled] = useState(true)
   const [workflowProgress, setWorkflowProgress] = useState({})
   const [workflowLogs, setWorkflowLogs] = useState([])
 
@@ -40,6 +43,7 @@ export default function Home() {
     { id: 'memory', name: '🧠 Long Memory' },
     { id: 'code', name: '💻 Code Editor' },
     { id: 'vision', name: '👁️ Vision + Agents' },
+    { id: 'workflows', name: '🧩 ComfyUI Workflows' },
     { id: 'settings', name: '⚙️ Settings' }
   ]
 
@@ -49,25 +53,36 @@ export default function Home() {
   }, [longTermMemory])
 
   // Chat functions
-  const sendMessage = () => {
+  const sendMessage = async () => {
     if (!input.trim()) return
-    const newHistory = [...chatHistory, { role: 'user', content: input, timestamp: new Date().toISOString() }]
+    const message = input.trim()
+    const newHistory = [...chatHistory, { role: 'user', content: message, timestamp: new Date().toISOString() }]
     setChatHistory(newHistory)
     setInput('')
-    
-    // Save to long-term memory
     setLongTermMemory(prev => ({
       ...prev,
       chatHistory: newHistory,
-      knowledgeBase: [...prev.knowledgeBase, { type: 'chat', content: input, timestamp: new Date().toISOString() }]
+      knowledgeBase: [...prev.knowledgeBase, { type: 'chat', content: message, timestamp: new Date().toISOString() }]
     }))
 
-    setTimeout(() => {
-      const aiReply = `🤖 Nexus Dola response:\nI understand your request: "${input.slice(0,50)}..."\n✅ This has been saved to your long-term memory. I can reference this conversation at any time.\nReady to generate, edit, or add to workflow.`
+    try {
+      const response = await fetch('/api/modelark/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ model: chatModel, messages: newHistory.map(item => ({ role: item.role === 'ai' ? 'assistant' : item.role, content: item.content })) })
+      })
+      const data = await response.json()
+      const aiReply = data?.choices?.[0]?.message?.content || data?.output_text || ('🤖 Nexus Dola response:\n' + message)
       const finalHistory = [...newHistory, { role: 'ai', content: aiReply, timestamp: new Date().toISOString() }]
       setChatHistory(finalHistory)
       setLongTermMemory(prev => ({ ...prev, chatHistory: finalHistory }))
-    }, 1000)
+      if (voiceEnabled) speakAgentReply(aiReply)
+    } catch (error) {
+      const aiReply = 'ModelArk request failed: ' + (error?.message || 'Unknown error')
+      const finalHistory = [...newHistory, { role: 'ai', content: aiReply, timestamp: new Date().toISOString() }]
+      setChatHistory(finalHistory)
+      if (voiceEnabled) speakAgentReply(aiReply)
+    }
   }
 
   // Image generation
@@ -728,6 +743,18 @@ export default function Home() {
         )}
 
         {/* Settings Tab */}
+        {activeTab === 'workflows' && (
+          <div className="page">
+            <div className="top-bar glass-panel">
+              <div>
+                <h1>🧩 ComfyUI Workflow Studio</h1>
+                <p className="subtitle">This workflow library belongs only to the Dola agent. Import, create, edit, and run ComfyUI graphs.</p>
+              </div>
+              <button onClick={() => { setVoiceEnabled(!voiceEnabled); if (voiceEnabled) stopAgentVoice(); else speakAgentReply('Voice replies are now enabled.'); }}>{voiceEnabled ? '🔊 Voice On' : '🔇 Voice Off'}</button>
+            </div>
+            <WorkflowLibrary />
+          </div>
+        )}
         {activeTab === 'settings' && (
           <div className="page">
             <h1>⚙️ Settings</h1>
