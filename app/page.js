@@ -24,7 +24,7 @@ export default function Home() {
     { role: 'ai', content: '👋 Welcome to Nexus Dola Studio. Ask me anything, or generate images/videos! All your data is saved to long-term memory automatically.' }
   ])
   const [input, setInput] = useState('')
-  const [chatModel, setChatModel] = useState('dola-seed-2.1-pro')
+  const [chatModel, setChatModel] = useState('dola-seed-2-1-turbo-260628')
   const [imgPrompt, setImgPrompt] = useState('')
   const [imgModel, setImgModel] = useState('seedream-5.0-pro')
   const [imgStyle, setImgStyle] = useState('realistic')
@@ -277,9 +277,9 @@ export default function Home() {
                 <p className="subtitle">Long-term memory enabled • All chat saved permanently</p>
               </div>
               <select value={chatModel} onChange={e => setChatModel(e.target.value)}>
-                <option value="dola-seed-2.1-pro">Dola Seed 2.1 Pro — Flagship</option>
-                <option value="dola-seed-2.1-lite">Dola Seed 2.1 Lite — Fast</option>
-                <option value="glm-5.1">GLM 5.1 — Reasoning</option>
+                <option value="dola-seed-2-1-turbo-260628">Dola Seed 2.1 Turbo — Director</option>
+                <option value="deepseek-v4-1-flash-260910">DeepSeek V4.1 Flash — Reasoning + Vision</option>
+                <option value="glm-5-3-flash-260828">GLM 5.3 Flash — Multimodal + Tools</option>
               </select>
             </div>
             <div className="chat-window glass-panel">
